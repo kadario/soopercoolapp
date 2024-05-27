@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "supercoolapp"
+authors = [{ name = "Alexander Malyshev", email = "alex.mallyshev@gmail.com" }]
+description = "Test application with desktop GUI"
+version = "0.0.1"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = ["pyqt > 6.0.0"]
