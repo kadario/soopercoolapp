@@ -84,8 +84,8 @@ class RectangleItem(QGraphicsRectItem):
 
       if not rectScene.contains(newPos) :
         #Keep the item inside the scene rect.
-        newPos.setX(min(rectScene.right(), max(newPos.x(), rectScene.left())))
-        newPos.setY(min(rectScene.bottom(), max(newPos.y(), rectScene.top())))
+        newPos.setX(min(rectScene.right() - self.rect().width(), max(newPos.x(), rectScene.left())))
+        newPos.setY(min(rectScene.bottom() - self.rect().height(), max(newPos.y(), rectScene.top())))
         
         return newPos
 
@@ -121,30 +121,6 @@ class RectangleItem(QGraphicsRectItem):
 
 
   #CUSTOM METHODS:
-
-  def closest(self, pos, i, j):
-    return i if QLineF(pos, i).length() < QLineF(pos, j).length() else j
-
-  def tangentPositions(self, item_A, item_B):
-    radius = self.rect().width() / 2
-    
-    radius_A = radius + item_A.rect().width() / 2
-    radius_B = radius + item_B.rect().width() / 2
-    
-    position_A = item_A.pos(); 
-    position_B = item_B.pos()
-    
-    diameter = QLineF(position_A, position_B).length()
-    
-    chord_distance = (radius_A ** 2 - radius_B ** 2 + diameter ** 2) / (2 * diameter)
-    half_chord = abs(radius_A ** 2 - chord_distance ** 2) ** 0.5 *(-1*(chord_distance > radius_A) | 1)
-    
-    mid = position_A + chord_distance * (position_B - position_A) / diameter
-    
-    dx = half_chord * (position_B - position_A).y() / diameter
-    dy = half_chord * (position_B - position_A).x() / diameter
-    
-    return mid + QPointF(dx, -dy), mid + QPointF(-dx, dy)
 
   def add_line(self, line, ispoint):
     self.line = line
@@ -196,18 +172,18 @@ class RectangleItem(QGraphicsRectItem):
           collideCenterX = collider.pos().x() + collider.rect().width() / 2
           colliderCenterY = collider.pos().y() + collider.rect().height() / 2
           
-          # creating line between two centers to check cosinus
+          # creating line between two centers to check cos
           line_central_position_1 = QPointF(collideCenterX, colliderCenterY)
           line_central_position_2 = QPointF(selfCenterX, selfCenterY)
 
           line = QLineF(line_central_position_1, line_central_position_2)
 
           # get Cosinus
-          cosinus = (collider.rect().width()/2 / line.length()) if line.length() > 0 else 0
+          cos = (collider.rect().width()/2 / line.length()) if line.length() > 0 else 0
           
           # Check cosinus value to know which side our block closer to
-          # And put our block to
-          if cosinus > 0.4 and cosinus < 0.7 :
+          # And put our block to new position
+          if cos > 0.4 and cos < 0.7 :
             if self.pos().x() > collideCenterX:
               self.setX(collider.pos().x() + collider.rect().width())
             else:

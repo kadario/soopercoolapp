@@ -4,7 +4,7 @@ from PyQt6.QtCore import QSize
 from PyQt6.QtWidgets import (
     QWidget, 
     QMainWindow, 
-    QVBoxLayout,
+    QGridLayout,
   )
 
 from src.constants import *
@@ -23,7 +23,7 @@ class MainWindow(QMainWindow):
     self.setWindowTitle("Supercool app!")
     self.setFixedSize(QSize(SCENE_WIDTH, SCENE_HEIGHT))
 
-    layout = QVBoxLayout()
+    layout = QGridLayout()
     layout.setContentsMargins(0, 0, 0, 0)
     layout.addWidget(DrawArea(self))
     

@@ -48,21 +48,45 @@ from src.rectangle_item import RectangleItem
 class DrawArea(QGraphicsView):
   #INIT:
   
-  def __init__(self, parent):
+  def __init__(self, parent = None):
     super(DrawArea, self).__init__(parent)
 
     # Creating scene for drawing elements
     scene = QGraphicsScene()
-    scene.setSceneRect(0, 0, SCENE_WIDTH - 2, SCENE_HEIGHT - 2)
+    scene.setSceneRect(0, 0, SCENE_WIDTH, SCENE_HEIGHT)
+
     scene.setBackgroundBrush(QColor(185, 222, 126))
 
     self.setScene(scene)
+    # self.fitInView(QRectF(self.scene().sceneRect()))
+    print(scene.sceneRect())
+
+
     self.points = []
     self.connections = []
   
   
   # EVENTS:
-  
+
+  def updateView(self):
+    scene = self.scene()
+    r = scene.sceneRect()
+    print('rect %d %d %d %d' % (r.x(), r.y(), r.width(), r.height()))
+    self.fitInView(r, Qt.AspectRatioMode.KeepAspectRatio)
+
+  def resizeEvent(self, event):
+      print('resize event start')
+      self.updateView()
+      print('resize event end')
+
+  def showEvent(self, event):
+      # ensure that the update only happens when showing the window
+      # programmatically, otherwise it also happen when unminimizing the
+      # window or changing virtual desktop
+      if not event.spontaneous():
+          print('show event')
+          self.updateView()
+    
   def mouseDoubleClickEvent(self, event: QMouseEvent | None):
     if event.button() == Qt.MouseButton.LeftButton:
       self.add_new_block(event)
