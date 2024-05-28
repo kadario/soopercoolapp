@@ -2,45 +2,9 @@
 
 import random
 
-from PyQt6.QtCore import QSize, Qt, QEvent, QRectF, QPointF, QPoint, QSizeF, QLineF
-from PyQt6.QtGui import (
-    QIcon, 
-    QKeyEvent, 
-    QMouseEvent, 
-    QMoveEvent, 
-    QPaintEngine, 
-    QPaintEvent, 
-    QPainter, 
-    QPainterPath, 
-    QPen, 
-    QBrush, 
-    QColor, 
-    QPalette,
-    QPolygonF, 
-    QPixmap
-  )
-
-from PyQt6.QtWidgets import (
-    QApplication,
-    QGraphicsSceneDragDropEvent,
-    QGraphicsSceneHoverEvent,
-    QGraphicsSceneMouseEvent,
-    QStyleOptionGraphicsItem, 
-    QWidget, 
-    QMainWindow, 
-    QPushButton, 
-    QGraphicsScene, 
-    QGraphicsView, 
-    QGraphicsRectItem, 
-    QGridLayout,
-    QVBoxLayout,
-    QGraphicsItem,
-    QLayout,
-    QLabel,
-    QGraphicsEllipseItem,
-    QGraphicsLineItem
-
-  )
+from PyQt6.QtCore import Qt, QPointF, QLineF
+from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem
 
 from src.constants import *
 
@@ -190,10 +154,10 @@ class RectangleItem(QGraphicsRectItem):
 
           line = QLineF(line_central_position_1, line_central_position_2)
 
-          # get Cosinus of angle between line and horisontal line
+          # get Cos of angle between line and horizontal line
           cos = (collider.rect().width()/2 / line.length()) if line.length() > 0 else 0
           
-          # Check cosinus value to know which side our block closer to
+          # Check cos value to know which side our block closer to
           # And put our block to new position
           if cos > 0.4 and cos < 0.7 :
             if self.pos().x() > collideCenterX:
@@ -208,7 +172,7 @@ class RectangleItem(QGraphicsRectItem):
           
       collisions = self.collidingItems()
 
-      #Check if our block not moving out of the scene
+  #Check if our block not moving out of the scene
   def offset_position_check(self):
     #Check X axis
     if self.pos().x() < 0:

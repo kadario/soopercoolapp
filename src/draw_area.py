@@ -1,46 +1,8 @@
 #IMPORTS:
 
-from PyQt6.QtCore import QSize, Qt, QEvent, QRectF, QPointF, QPoint, QSizeF, QLineF
-from PyQt6.QtGui import (
-    QIcon,
-    QKeyEvent,
-    QMouseEvent,
-    QMoveEvent,
-    QPaintEngine,
-    QPaintEvent,
-    QPainter, 
-    QPainterPath, 
-    QPainterPathStroker,
-    QPen,
-    QBrush,
-    QImage,
-    QColor,
-    QPalette,
-    QPixmap
-  )
-
-from PyQt6.QtWidgets import (
-    QApplication,
-    QGraphicsSceneDragDropEvent,
-    QGraphicsSceneHoverEvent,
-    QGraphicsSceneMouseEvent,
-    QStyleOptionGraphicsItem, 
-    QWidget,
-    QMainWindow,
-    QPushButton,
-    QGraphicsScene,
-    QGraphicsView,
-    QGraphicsRectItem,
-    QGridLayout,
-    QVBoxLayout,
-    QGraphicsItem,
-    QLayout,
-    QLabel,
-    QGraphicsEllipseItem,
-    QGraphicsLineItem
-
-  )
-
+from PyQt6.QtCore import Qt, QLineF
+from PyQt6.QtGui import QMouseEvent, QBrush, QImage
+from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView
 from src.constants import *
 from src.rectangle_item import RectangleItem
 
@@ -111,18 +73,22 @@ class DrawArea(QGraphicsView):
     if self.collisions_checker(rectangle):
       self.scene().addItem(rectangle)
 
-  #Check for all collisions
+  #Check for all collisions before element created
   def collisions_checker(self, rectangle):
     colliding = self.scene().collidingItems(rectangle)
 
+    #get positions for scene and current element
     position_x = rectangle.scenePos().x()
     position_y = rectangle.scenePos().y()
     rect_width = rectangle.rect().width()
     rect_height = rectangle.rect().height()
+    # rectangle doesn't have scene yet. so using self:
+    scene_width = self.sceneRect().width()
+    scene_height = self.sceneRect().height()
 
-    if position_x < 0 or position_x + rect_width > self.sceneRect().width():
+    if position_x < 0 or position_x + rect_width > scene_width:
       return False
-    if position_y < 0 or position_y + rect_height > self.sceneRect().height():
+    if position_y < 0 or position_y + rect_height > scene_height:
       return False
     
     if len(colliding) == 0:
@@ -138,24 +104,25 @@ class DrawArea(QGraphicsView):
     # Adding start and end line points to list
     self.points.append(context_item.pos().x())
     self.points.append(context_item.pos().y())
-    
     self.connections.append(context_item)
-    # print("connect dict", len(self.connectionsDict))
-    
 
     #if all points added we can draw line
     if len(self.points) == 4:
       half_width = context_item.rect().width()/2
       half_height = context_item.rect().height()/2
       
-      new_line = QLineF(self.points[0] + half_width, self.points[1] + half_height, self.points[2] + half_width, self.points[3] + half_height)
+      # Sorry for that mess
+      new_line = QLineF(
+        self.points[0] + half_width,
+        self.points[1] + half_height,
+        self.points[2] + half_width,
+        self.points[3] + half_height
+      )
       
       connection_line = self.scene().addLine(new_line)
       connection_line.setZValue(-1)
-
-      
       connection_index = len(self.connectionsDict) + 1
-      
+
       self.connectionsDict[connection_index] = []
 
       for item in range(len(self.connections)):
@@ -165,7 +132,6 @@ class DrawArea(QGraphicsView):
         self.connections[item].set_connection_state(event)
         self.connections[item].set_connection_index(connection_index)
       
-      # print("self.connectionsDict", self.connectionsDict)
       # Clear line data after it was created
       self.clear_points_and_connections()
 
@@ -178,4 +144,4 @@ class DrawArea(QGraphicsView):
     for rectangle in self.connectionsDict[index]:
       print(rectangle)
       rectangle.remove_line_connection()
-    # del self.connectionsDict[index]
+    del self.connectionsDict[index]
