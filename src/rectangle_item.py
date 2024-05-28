@@ -71,13 +71,13 @@ class RectangleItem(QGraphicsRectItem):
     self.parent = parent
     self.line = None
     self.isPoint = None
-
+    self.connection_index = None
 
   #EVENTS:
 
   def itemChange(self, change , value):
     if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.scene():
-      self.move_line_to_center()
+      self.move_connection_to_center()
       
       newPos = value
       rectScene = self.scene().sceneRect()
@@ -93,6 +93,7 @@ class RectangleItem(QGraphicsRectItem):
   
   def mouseMoveEvent(self, event):
     super().mouseMoveEvent(event)
+    self.offset_position_check()
     
     colliding = self.collidingItems()
 
@@ -104,36 +105,47 @@ class RectangleItem(QGraphicsRectItem):
 
     if event.button() == Qt.MouseButton.RightButton:
       if self.line == None:
-        self.set_connection_state()
+        self.set_connection_state(event)
       else:
+        self.parent.remove_connection_by_index(self.connection_index)
         self.scene().removeItem(self.line)
-        self.line = None
+        self.remove_line_connection()
       
     return super().mousePressEvent(event)
   
   def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+    super().mouseReleaseEvent(event)
+    self.offset_position_check()
+    
     colliding = self.collidingItems()
 
     if len(colliding) > 0:
       self.check_collisions(event)
-    
-    super().mouseReleaseEvent(event)
 
 
   #CUSTOM METHODS:
 
-  def add_line(self, line, ispoint):
+  def add_line_connection(self, line, ispoint):
     self.line = line
     self.isPoint = ispoint
   
+  def remove_line_connection(self):
+    if self.line:
+      self.scene().removeItem(self.line)
+    self.line = None
+    self.isPoint = None
+  
+  def set_connection_index(self, index):
+    self.connection_index = index
+  
   # Change state of the selected block while connection with another my lines
-  def set_connection_state(self):
+  def set_connection_state(self, event):
     if self.connection_status == False:
       self.connection_status = True
       self.setCursor(Qt.CursorShape.ArrowCursor) 
       self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
       self.setOpacity(0.5)
-      self.parent.hello_new_line(self)
+      self.parent.hello_new_line(event, self)
 
     else:
       self.connection_status = False
@@ -142,7 +154,7 @@ class RectangleItem(QGraphicsRectItem):
       self.setOpacity(1)
 
   # Redraw line connected to block when block position updated
-  def move_line_to_center(self):
+  def move_connection_to_center(self):
     if self.line != None:
       position_x = self.sceneBoundingRect().x() + self.rect().width()/2
       position_y = self.sceneBoundingRect().y() + self.rect().height()/2
@@ -166,7 +178,7 @@ class RectangleItem(QGraphicsRectItem):
           
           collider = collisions[collision]
           
-          # Get coordinates of center of two blocks
+          # Get coordinates of centers of two blocks
           selfCenterX = self.pos().x() + self.rect().width() / 2
           selfCenterY = self.pos().y() + self.rect().height() / 2
           collideCenterX = collider.pos().x() + collider.rect().width() / 2
@@ -178,7 +190,7 @@ class RectangleItem(QGraphicsRectItem):
 
           line = QLineF(line_central_position_1, line_central_position_2)
 
-          # get Cosinus
+          # get Cosinus of angle between line and horisontal line
           cos = (collider.rect().width()/2 / line.length()) if line.length() > 0 else 0
           
           # Check cosinus value to know which side our block closer to
@@ -195,3 +207,17 @@ class RectangleItem(QGraphicsRectItem):
               self.setY(collider.pos().y() - collider.rect().height())
           
       collisions = self.collidingItems()
+
+      #Check if our block not moving out of the scene
+  def offset_position_check(self):
+    #Check X axis
+    if self.pos().x() < 0:
+      self.setX(0)
+    elif self.pos().x() + self.rect().width() > self.scene().sceneRect().width():
+      self.setX(self.scene().sceneRect().width() - self.rect().width())
+
+    #Check Y axis
+    if self.pos().y() < 0:
+      self.setY(0)
+    elif self.pos().y() + self.rect().height() > self.scene().sceneRect().height():
+      self.setY(self.scene().sceneRect().height() - self.rect().height())

@@ -1,3 +1,13 @@
+
+#   def drawBackground(self, painter, rect):
+#     print("draw bg!")
+#     super().drawBackground(painter, rect)
+    
+#     # if self.bg_image.isNull():
+#     #     painter.drawImage(rect, self.bg_image)
+#     # else:
+#     #     painter.drawImage(rect, self.bg_image)
+
 """
 This file is to collect all unusable parts of the code.
 Probably, it will be needed someday (No)
