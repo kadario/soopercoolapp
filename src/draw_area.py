@@ -1,15 +1,19 @@
 #IMPORTS:
 
-from PyQt6.QtCore import Qt, QLineF
-from PyQt6.QtGui import QMouseEvent, QBrush, QImage
-from PyQt6.QtWidgets import QGraphicsScene, QGraphicsView
 from src.constants import *
 from src.rectangle_item import RectangleItem
+from src.connection_line import ConnectionLine
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import *
+from PyQt6.QtWidgets import *
 
 
 #DRAW AREA CLASS:
 
 class DrawArea(QGraphicsView):
+  startItem = newConnection = None
+  
   #INIT:
   
   def __init__(self, parent = None):
@@ -23,9 +27,11 @@ class DrawArea(QGraphicsView):
 
     self.setScene(scene)
 
-    self.points = []
+    self.connection_status = False
     self.connections = []
     self.connectionsDict = {}
+
+    self.ctrl = False
 
 
   # EVENTS:
@@ -39,15 +45,82 @@ class DrawArea(QGraphicsView):
     # window or changing virtual desktop
     if not event.spontaneous():
         self.update_view()
+  
+  def keyPressEvent(self, event: QKeyEvent | None) -> None:
+        if event.key() == Qt.Key.Key_Control:
+          self.ctrl = True
+        return super().keyPressEvent(event)
+
+  def keyReleaseEvent(self, event: QKeyEvent | None) -> None:
+        if event.key() == Qt.Key.Key_Control:
+          self.ctrl = False
+        return super().keyPressEvent(event)
+  
+  def mousePressEvent(self, event):
+    if event.button() == Qt.MouseButton.RightButton:
+      self.connections_updater(event)
+
+    super().mousePressEvent(event)
     
   def mouseDoubleClickEvent(self, event: QMouseEvent | None):
     if event.button() == Qt.MouseButton.LeftButton:
       #creating rectangle on area
       self.add_new_block(event)
+
     super().mouseDoubleClickEvent(event)
-  
+
+  def mouseMoveEvent(self, event):
+    if self.newConnection:
+        item = self.check_connection_area(event.scenePosition())
+        if (item and item != self.startItem and
+            self.startItem.onLeft != item.onLeft):
+                p2 = item.scenePos()
+        else:
+            p2 = event.scenePosition()
+        self.newConnection.setP2(p2)
+        return
+    super().mouseMoveEvent(event)
+
   
   # CUSTOM METHODS:
+
+  def connections_updater(self, event):
+    item = self.check_connection_area(event.scenePosition())
+    
+    if self.ctrl:
+      collided = item.collidingItems()
+      for collider in collided:
+        if isinstance(collider, ConnectionLine):
+          self.scene().removeItem(collider)
+    else:
+      if item and not self.connection_status:
+          item.set_connection_state(True)
+          self.connection_status = True
+          self.startItem = item
+
+          self.newConnection = ConnectionLine(item, event.scenePosition())
+          self.scene().addItem(self.newConnection)
+      elif item and self.connection_status:
+        self.connection_status = False
+
+        if self.newConnection:
+          item_next = self.check_connection_area(event.scenePosition())
+          
+          if item_next and item_next != self.startItem:
+            self.newConnection.setEnd(item)
+
+            if self.startItem.add_line(self.newConnection):
+              item_next.add_line(self.newConnection)
+            else:
+              self.startItem.set_connection_state(False)
+              self.startItem.remove_line(self.newConnection)
+              self.scene().removeItem(self.newConnection)
+          else:
+              self.startItem.set_connection_state(False)
+              self.startItem.remove_line(self.newConnection)
+              self.scene().removeItem(self.newConnection)
+        self.startItem.set_connection_state(False)
+        self.startItem = self.newConnection = None
 
   def update_view(self):
     scene = self.scene()
@@ -67,7 +140,7 @@ class DrawArea(QGraphicsView):
     box_center_x = mouse_position.x() - BOX_WIDTH/2
     box_center_y = mouse_position.y() - BOX_HEIGHT/2
     
-    rectangle = RectangleItem(0, 0, BOX_WIDTH, BOX_HEIGHT, self)
+    rectangle = RectangleItem(0, 0, BOX_WIDTH, BOX_HEIGHT)
     rectangle.setPos(box_center_x, box_center_y)
 
     if self.collisions_checker(rectangle):
@@ -99,49 +172,8 @@ class DrawArea(QGraphicsView):
           return False
       return True
 
-  # Adding new line to scene and connect it between two block
-  def hello_new_line(self, event,  context_item = None):
-    # Adding start and end line points to list
-    self.points.append(context_item.pos().x())
-    self.points.append(context_item.pos().y())
-    self.connections.append(context_item)
 
-    #if all points added we can draw line
-    if len(self.points) == 4:
-      half_width = context_item.rect().width()/2
-      half_height = context_item.rect().height()/2
-      
-      # Sorry for that mess
-      new_line = QLineF(
-        self.points[0] + half_width,
-        self.points[1] + half_height,
-        self.points[2] + half_width,
-        self.points[3] + half_height
-      )
-      
-      connection_line = self.scene().addLine(new_line)
-      connection_line.setZValue(-1)
-      connection_index = len(self.connectionsDict) + 1
-
-      self.connectionsDict[connection_index] = []
-
-      for item in range(len(self.connections)):
-        self.connectionsDict[connection_index].append(self.connections[item])
-        
-        self.connections[item].add_line_connection(connection_line, True if item == 0 else False)
-        self.connections[item].set_connection_state(event)
-        self.connections[item].set_connection_index(connection_index)
-      
-      # Clear line data after it was created
-      self.clear_points_and_connections()
-
-  # Clear line data after it was created
-  def clear_points_and_connections(self):
-    self.points = []
-    self.connections = []
-
-  def remove_connection_by_index(self, index):
-    for rectangle in self.connectionsDict[index]:
-      print(rectangle)
-      rectangle.remove_line_connection()
-    del self.connectionsDict[index]
+  def check_connection_area(self, pos):
+    for item in self.scene().items(pos):
+      if isinstance(item, RectangleItem):
+        return item

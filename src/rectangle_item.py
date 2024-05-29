@@ -1,9 +1,7 @@
-#IMPORTS:
-
 import random
 
 from PyQt6.QtCore import Qt, QPointF, QLineF
-from PyQt6.QtGui import QBrush, QColor
+from PyQt6.QtGui import QBrush, QColor, QPen
 from PyQt6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem
 
 from src.constants import *
@@ -14,10 +12,11 @@ from src.constants import *
 class RectangleItem(QGraphicsRectItem):
   #INIT:
 
-  def __init__(self, x, y, width, height, parent):
+  def __init__(self, x, y, width, height, onLeft = False):
     super().__init__(x, y, width, height)
     
     brush = QBrush(QColor(*[random.randint(0, 255) for _ in range(3)]))
+    
 
     self.setBrush(brush)
     self.setAcceptDrops(True)
@@ -31,18 +30,18 @@ class RectangleItem(QGraphicsRectItem):
 
     #PROPERTIES:
     
-    self.connection_status = False
-    self.parent = parent
-    self.line = None
-    self.isPoint = None
-    self.connection_index = None
+    self.onLeft = onLeft
+    self.lines = []
+    self.connection_state = False
 
   #EVENTS:
 
   def itemChange(self, change , value):
     if change == QGraphicsItem.GraphicsItemChange.ItemPositionChange and self.scene():
-      self.move_connection_to_center()
-      
+      for line in self.lines:
+          line.updateLine(self)
+    
+      #Preventing of moving other elements out of scene
       newPos = value
       rectScene = self.scene().sceneRect()
 
@@ -66,19 +65,11 @@ class RectangleItem(QGraphicsRectItem):
 
   def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
     self.setZValue(1)
-
-    if event.button() == Qt.MouseButton.RightButton:
-      if self.line == None:
-        self.set_connection_state(event)
-      else:
-        self.parent.remove_connection_by_index(self.connection_index)
-        self.scene().removeItem(self.line)
-        self.remove_line_connection()
-      
     return super().mousePressEvent(event)
   
   def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
     super().mouseReleaseEvent(event)
+    self.setZValue(0)
     self.offset_position_check()
     
     colliding = self.collidingItems()
@@ -89,33 +80,31 @@ class RectangleItem(QGraphicsRectItem):
 
   #CUSTOM METHODS:
 
-  def add_line_connection(self, line, ispoint):
-    self.line = line
-    self.isPoint = ispoint
+  def add_line(self, lineItem):
+    for existing in self.lines:
+        if existing.controlPoints() == lineItem.controlPoints():
+            # another line with the same control points already exists
+            return False
+    self.lines.append(lineItem)
+    return True
   
-  def remove_line_connection(self):
-    if self.line:
-      self.scene().removeItem(self.line)
-    self.line = None
-    self.isPoint = None
-  
-  def set_connection_index(self, index):
-    self.connection_index = index
+  def remove_line(self, lineItem):
+    for existing in self.lines:
+        if existing.controlPoints() == lineItem.controlPoints():
+            self.scene().removeItem(existing)
+            self.lines.remove(existing)
+            return True
+    return False
   
   # Change state of the selected block while connection with another my lines
-  def set_connection_state(self, event):
-    if self.connection_status == False:
-      self.connection_status = True
-      self.setCursor(Qt.CursorShape.ArrowCursor) 
-      self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, False)
+  def set_connection_state(self, state):
+    if state == True:
       self.setOpacity(0.5)
-      self.parent.hello_new_line(event, self)
+      self.setCursor(Qt.CursorShape.ArrowCursor) 
 
     else:
-      self.connection_status = False
-      self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsMovable, True)
-      self.setCursor(Qt.CursorShape.OpenHandCursor) 
       self.setOpacity(1)
+      self.setCursor(Qt.CursorShape.OpenHandCursor) 
 
   # Redraw line connected to block when block position updated
   def move_connection_to_center(self):
