@@ -74,10 +74,10 @@ class DrawArea(QGraphicsView):
         item = self.check_connection_area(event.scenePosition())
         if (item and item != self.startItem and
             self.startItem.onLeft != item.onLeft):
-                p2 = item.scenePos()
+                point_2 = item.scenePos()
         else:
-            p2 = event.scenePosition()
-        self.newConnection.setP2(p2)
+            point_2 = event.scenePosition()
+        self.newConnection.setP2(point_2)
         return
     super().mouseMoveEvent(event)
 
@@ -172,7 +172,7 @@ class DrawArea(QGraphicsView):
           return False
       return True
 
-
+  #Check is we have connections on clicked item block
   def check_connection_area(self, pos):
     for item in self.scene().items(pos):
       if isinstance(item, RectangleItem):

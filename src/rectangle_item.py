@@ -1,7 +1,9 @@
+#IMPORTS
+
 import random
 
 from PyQt6.QtCore import Qt, QPointF, QLineF
-from PyQt6.QtGui import QBrush, QColor, QPen
+from PyQt6.QtGui import QBrush, QColor
 from PyQt6.QtWidgets import QGraphicsSceneMouseEvent, QGraphicsRectItem, QGraphicsItem
 
 from src.constants import *
