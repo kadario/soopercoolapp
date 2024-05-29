@@ -2,8 +2,8 @@
 
 Test Python app.
 
-Open window with scene, bu douple clicking we adding block on the scene and can move it.
-We can add relations between blocks that shown by the line from one block to another
+Open window with scene, by douple click You adding block on the scene and can move it.
+You can add relations between blocks that shown by the line from one block to another
 
 - DblClick: Add block with double click
 - Drag: Move block with left mouse button holding
