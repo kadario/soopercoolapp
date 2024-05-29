@@ -1,8 +1,6 @@
 
-import sys
-from PyQt6.QtCore import QSize, Qt, QEvent, QRectF, QPointF, QPoint, QSizeF, QLineF, QRect
-from PyQt6.QtGui import *
-from PyQt6.QtWidgets import *
+from PyQt6.QtCore import QLineF
+from PyQt6.QtWidgets import QGraphicsLineItem
 
 class ConnectionLine(QGraphicsLineItem):
     def __init__(self, start_item, next_point):
