@@ -16,9 +16,9 @@ class RectangleItem(QGraphicsRectItem):
 
   def __init__(self, x, y, width, height, onLeft = False):
     super().__init__(x, y, width, height)
-    
+
     brush = QBrush(QColor(*[random.randint(0, 255) for _ in range(3)]))
-    
+
 
     self.setBrush(brush)
     self.setAcceptDrops(True)
