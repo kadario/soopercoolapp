@@ -1,6 +1,6 @@
 # Supercool app
 
-Test Python app.
+Python app.
 
 Open window with scene, by douple click You adding block on the scene and can move it.
 You can add relations between blocks that shown by the line from one block to another
